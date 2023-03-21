@@ -56,7 +56,7 @@ class VGGAutoEncoder(nn.Module):
             feature_indices = feature_indices.expand_as(x_1)
             x = x_1*feature_indices + x_2*(1-feature_indices)
         elif mixup =='manifold':
-            mixup_lam = torch.from_numpy(np.linspace(0,1,11)).to(x.device).view(-1,1,1,1)
+            mixup_lam = torch.from_numpy(np.linspace(0,1,11)).to(x.device).view(-1,1,1,1).float()
             indices = [1,0]
 
             x_1=x[0].unsqueeze(0)
