@@ -81,7 +81,7 @@ def main(args):
             target = target.cuda(non_blocking=True)
             
             if args.mixup:
-                output = model(input,mixup=True)
+                output = model(input,mixup=args.mixup)
             else:
                 output = model(input)
                 input = transforms.ToPILImage()(input.squeeze().cpu())
