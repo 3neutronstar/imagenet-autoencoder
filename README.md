@@ -153,3 +153,13 @@ The decoded results will be save as ```figs/generation.jpg```
 |  ImageNet  |       |       |   [link](https://drive.google.com/file/d/1WwJiQ1kBcNCZ37F6PJ_0bIL0ZeU3_sV8/view?usp=sharing)    |       |          |          |          |           |           |
 
 Note that the size of Objects365 dataset is about half of ImageNet dataset(128 million images, much larger than Caltech256), so the performance may be comparable.
+
+- How to generate list
+```
+    python tools/generate_list.py --name imagenet --path /data/imagenet/train/
+```
+
+- How to implement mixup code
+```
+    CUDA_VISIBLE_DEVICES=0 python tools/reconstruct.py --arch vgg16 --resume pretrained/imagenet-vgg16.pth --val_list ./list/imagenet_list.txt  --mixup [option]
+```

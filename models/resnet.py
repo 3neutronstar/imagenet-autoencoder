@@ -27,11 +27,11 @@ class ResNetAutoEncoder(nn.Module):
         self.encoder = ResNetEncoder(configs=configs,       bottleneck=bottleneck)
         self.decoder = ResNetDecoder(configs=configs[::-1], bottleneck=bottleneck)
     
-    def forward(self, x,mixup=False):
+    def forward(self, x,mixup=None):
 
         x = self.encoder(x)
 
-        if mixup:
+        if mixup =='iammix':
             indices = [1,0]
             mixup_lam = np.linspace(0,1,11)
 
@@ -55,6 +55,16 @@ class ResNetAutoEncoder(nn.Module):
             # feature_indices.scatter_(1,channel_indices,1)
             feature_indices = feature_indices.expand_as(x_1)
             x = x_1*feature_indices + x_2*(1-feature_indices)
+        elif mixup =='manifold':
+            mixup_lam = torch.from_numpy(np.linspace(0,1,11)).to(x.device).view(-1,1,1,1)
+            indices = [1,0]
+
+            x_1=x[0].unsqueeze(0)
+            x_2=x[1].unsqueeze(0)
+            x_1=x_1.repeat(11,1,1,1)
+            x_2=x_2.repeat(11,1,1,1)
+            x = x_1 *mixup_lam + x_2 * (1-mixup_lam)
+
         x = self.decoder(x)
 
         return x
