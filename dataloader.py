@@ -92,7 +92,7 @@ def val_loader(args):
 
     val_loader = torch.utils.data.DataLoader(
                     val_dataset,
-                    shuffle=False,
+                    shuffle=False if not args.mixup else True,
                     batch_size=args.batch_size,
                     num_workers=args.workers,
                     pin_memory=True)

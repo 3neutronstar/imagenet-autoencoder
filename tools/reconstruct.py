@@ -66,7 +66,6 @@ def main(args):
     
     print('=> building the dataloader ...')
     train_loader = dataloader.val_loader(args)
-    train_loader.shuffle = True
 
     total_len= len(train_loader.dataset)
 
@@ -83,10 +82,11 @@ def main(args):
             
             if args.mixup:
                 output = model(input,mixup=True)
-            else:output = model(input)
+            else:
+                output = model(input)
+                input = transforms.ToPILImage()(input.squeeze().cpu())
 
 
-            input = transforms.ToPILImage()(input.squeeze().cpu())
             if args.mixup:
                 output = output.squeeze().cpu()
                 results.append(output)
