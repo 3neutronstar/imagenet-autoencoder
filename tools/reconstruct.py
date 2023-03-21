@@ -39,7 +39,7 @@ def get_args():
                         help='backbone architechture')
     parser.add_argument('--resume', type=str)
     parser.add_argument('--val_list', type=str)              
-    parser.add_argument('--mixup', action='store_true', default=False)              
+    parser.add_argument('--mixup', default=None, type=str)              
     
     args = parser.parse_args()
 
