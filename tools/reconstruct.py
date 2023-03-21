@@ -14,8 +14,20 @@ sys.path.append("./")
 import utils
 import models.builer as builder
 import dataloader
+import torchvision 
 
 import os
+import random
+#fix seed
+random.seed(1)
+torch.manual_seed(1)
+torch.cuda.manual_seed(1)
+torch.cuda.manual_seed_all(1)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+# fix seed in numpy
+import numpy as np
+np.random.seed(1)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -27,11 +39,14 @@ def get_args():
                         help='backbone architechture')
     parser.add_argument('--resume', type=str)
     parser.add_argument('--val_list', type=str)              
+    parser.add_argument('--mixup', action='store_true', default=False)              
     
     args = parser.parse_args()
 
     args.parallel = 0
-    args.batch_size = 1
+    if args.mixup:
+        args.batch_size = 2
+    else: args.batch_size = 1
     args.workers = 0
 
     return args
@@ -51,32 +66,48 @@ def main(args):
     
     print('=> building the dataloader ...')
     train_loader = dataloader.val_loader(args)
+    train_loader.shuffle = True
+
+    total_len= len(train_loader.dataset)
 
     plt.figure(figsize=(16, 9))
 
     model.eval()
     print('=> reconstructing ...')
     with torch.no_grad():
+        results=[]
         for i, (input, target) in enumerate(train_loader):
-            
+
             input = input.cuda(non_blocking=True)
             target = target.cuda(non_blocking=True)
+            
+            if args.mixup:
+                output = model(input,mixup=True)
+            else:output = model(input)
 
-            output = model(input)
 
             input = transforms.ToPILImage()(input.squeeze().cpu())
-            output = transforms.ToPILImage()(output.squeeze().cpu())
+            if args.mixup:
+                output = output.squeeze().cpu()
+                results.append(output)
 
-            plt.subplot(8,16,2*i+1, xticks=[], yticks=[])
-            plt.imshow(input)
+            else: 
+                output = transforms.ToPILImage()(output.squeeze().cpu())
+                plt.subplot(8,16,2*i+1, xticks=[], yticks=[])
+                plt.imshow(input)
 
-            plt.subplot(8,16,2*i+2, xticks=[], yticks=[])
-            plt.imshow(output)
+                plt.subplot(8,16,2*i+2, xticks=[], yticks=[])
+                plt.imshow(output)
 
             if i == 63:
                 break
+    if args.mixup:
+        for i,r in enumerate(results):
+            grid=torchvision.utils.make_grid(r, nrow=11, padding=1, normalize=True, range=None, scale_each=False, pad_value=0)
+            # save
+            torchvision.utils.save_image(grid, 'figs/reconstruction{}.jpg'.format(i))        
+    else:plt.savefig('figs/reconstruction.jpg')
 
-    plt.savefig('figs/reconstruction.jpg')
 
 if __name__ == '__main__':
 
