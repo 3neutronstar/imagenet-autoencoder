@@ -31,8 +31,6 @@ class VGGAutoEncoder(nn.Module):
     def forward(self, x,mixup=False):
 
         x = self.encoder(x)
-        x = self.decoder(x)
-
         if mixup:
             indices = [1,0]
             mixup_lam = np.linspace(0,1,11)
@@ -57,7 +55,9 @@ class VGGAutoEncoder(nn.Module):
             # feature_indices.scatter_(1,channel_indices,1)
             feature_indices = feature_indices.expand_as(x_1)
             x = x_1*feature_indices + x_2*(1-feature_indices)
+
         x = self.decoder(x)
+
         return x
 
 class VGG(nn.Module):
