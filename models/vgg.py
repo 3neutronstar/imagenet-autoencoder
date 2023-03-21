@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 
 def get_configs(arch='vgg16'):
 
@@ -27,11 +28,36 @@ class VGGAutoEncoder(nn.Module):
         self.decoder = VGGDecoder(configs=configs[::-1], enable_bn=True)
         
     
-    def forward(self, x):
+    def forward(self, x,mixup=False):
 
         x = self.encoder(x)
         x = self.decoder(x)
 
+        if mixup:
+            indices = [1,0]
+            mixup_lam = np.linspace(0,1,11)
+
+            feature_channel_norm = x.norm(dim=[2,3], keepdim=True)
+            feature_channel_norm /= feature_channel_norm.sum(dim=1,keepdim=True)
+            feature_channel_norm_b = feature_channel_norm[indices]
+            distance = (feature_channel_norm - feature_channel_norm_b)
+            argsorted_distance = torch.argsort(distance, dim=1,descending=False) # value descending, index ascending
+            x_1=x[0].unsqueeze(0)
+            x_2=x[1].unsqueeze(0)
+            x_1=x_1.repeat(11,1,1,1)
+            x_2=x_2.repeat(11,1,1,1)
+            feature_indices = torch.zeros((x_1.shape[0],x_1.shape[1],1,1),device=x.device)
+            for i, lam in enumerate(mixup_lam):
+                channel_indices = argsorted_distance[0,:int(lam*x.shape[1])]
+                feature_indices[i].scatter_(0,channel_indices,1)
+            # print(feature_indices)
+            # exit()
+            # channel_indices = argsorted_distance [:,:int(mixup_lam*x.shape[1])]
+            # feature_indices = torch.zeros((x.shape[0],x.shape[1],1,1),device=x.device)
+            # feature_indices.scatter_(1,channel_indices,1)
+            feature_indices = feature_indices.expand_as(x_1)
+            x = x_1*feature_indices + x_2*(1-feature_indices)
+        x = self.decoder(x)
         return x
 
 class VGG(nn.Module):
